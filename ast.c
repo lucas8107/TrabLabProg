@@ -4,104 +4,176 @@
 #include <stdio.h>
 #include "hash.h"
 
-List *mkList() {
+IList *mkList() {
     initTable();
-    List *list = (List *) malloc(sizeof(List));
-    list->size = 0;
-    return list;
+    IList *list = (IList *) malloc(sizeof(IList));
+    size = 0;
 }
 
-
-void addLast(Instr *instr, List *list) {
+void addLast(Instr *instr, IList *list) {
     struct Node *node = (struct Node *) malloc(sizeof(struct Node));
     node->instr = instr;
-    node->next = list->head;
-    list->head = node;
-
-    list->size++;
-
+    if(isEmpty(list)) {
+        list->head = node;
+        list->last = node;
+    }
+    else {
+        list->last->next = node;
+        list->last = list->last->next;
+    }
+    size++;
 }
 
-// void addLast(Instr *instr, List *list) {
-//     struct Node *node = (struct Node *) malloc(sizeof(struct Node));
-//     node->instr = instr;
-//     if(isEmpty(list)) {
-//         list->head = node;
-//     }
-//     else {
-//         struct Node *aux = list->head;
-//         while(aux->next!=NULL) aux = aux->next;
-//         aux->next = node;
-//     }
-
-//     list->size++;
-// }
-
-bool isEmpty(List *list) {
-    return list->size == 0 ? TRUE : FALSE;
+bool isEmpty(IList *list) {
+    return size == 0 ? TRUE : FALSE;
 }
 
-void printList(List *list) {
-    printf("LIST_SIZE = %d\n", list->size);
+struct Node *getAt(int index, IList *list) {
     struct Node *node = list->head;
-    for(int i = 0; i < list->size; i++, node=node->next) {
-        execInstr(node->instr);
+    int i = 0;
+    while(i!=index) {
+        node = node->next;
+        i++;
     }
-    // while(node!=NULL) {
-    //     execInstr(node->instr);
-    //     node = node->next;
-    // }
+    return node;
 }
 
-Instr *mkInstrPrint(char* varName) {
+Elem *mkInt(int val) {
+    Elem *el = (Elem *) malloc(sizeof(Elem));
+    el->kind = INT_CONST;
+    el->contents.val = val;
+    return el;
+}
+
+Elem *mkVar(char *varName) {
+    Elem *el = (Elem *) malloc(sizeof(Elem));
+    el->kind = STRING;
+    el->contents.name = strdup(varName);
+    return el;
+}
+
+Instr *mkInstr(OpKind op, Elem *first, Elem *second, Elem *third) {
     Instr *instr = (Instr *) malloc(sizeof(Instr));
-    instr->attr.varName = strdup(varName);
-    instr->kind = PRINT;
-    return instr;
-}
-
-Instr *mkInstrRead(char* varName) {
-    Instr *instr = (Instr *) malloc(sizeof(Instr));
-    instr->attr.varName = strdup(varName);
-    instr->kind = READ;
-    return instr;
-}
-
-void execInstr(Instr *instr) {
-    int temp = 0;
-    switch (instr->kind) {
-        case PRINT:
-            printf("%d\n", lookUp(instr->attr.varName)->val);
-            break;
-        case READ:
-            printf("Var to read: %s\n", instr->attr.varName);
-            // scanf("%d", &temp);
-            insert(instr->attr.varName, temp);
-            break;
-        default:
-            printf("DEF\n");
-            break;
+    if(op == ATRIB) {
+        instr->op = op;
+        instr->first = first;
+        instr->second = second;
+        return instr;
+    }
+    if(op == ADD || op == SUB || op == MUL || op == DIV) {
+        instr->op = op;
+        instr->first = first;
+        instr->second = second;
+        instr->third = third;
+        return instr;
+    }
+    if(op == PRINT || op == READ) {
+        instr->op = op;
+        instr->first = first;
+        return instr;
+    }
+    if(op == GOTO_I || op == LABEL) {
+        if(op == LABEL)
+            insert(first->contents.name, size);
+        instr->op = op;
+        instr->first = first;
+        return instr;
+    }
+    if(op == IF_I) {
+        instr->op = op;
+        instr->first = first;
+        instr->second = second;
+        return instr;
+    }
+    if(op == QUIT) {
+        instr->op = QUIT;
+        return instr;
     }
 }
 
-Expr *mkExprOp(enum ExprKind kind, Expr *left, Expr *right) {
-    Expr *expr = (Expr *) malloc(sizeof(Expr));
-    expr->kind = kind;
-    expr->attrb.expr.left = left;
-    expr->attrb.expr.right = right;
-    return expr;
-}
+void run(IList *list) {
+    struct Node *node = list->head;
+    int aux;
+    int aux_2;
+    bool quit = FALSE;
+    while(node!=NULL && !quit) {
+        switch (node->instr->op) {
+            case QUIT:
+                quit = TRUE;
+                break;
+            case GOTO_I:
+                node = getAt(lookUp(node->instr->first->contents.name)->val, list);
+                break;
+            case IF_I:
+                if(node->instr->first->kind == STRING)
+                    aux = lookUp(node->instr->first->contents.name)->val;
+                else
+                    aux = node->instr->first->contents.val;
+                if(aux) {
+                    node = getAt(lookUp(node->instr->second->contents.name)->val, list);                    
+                }
+                break;
+            // case LABEL:
 
-Expr *mkExprVar(enum ExprKind kind, char *var) {
-    Expr *expr = (Expr *) malloc(sizeof(Expr));
-    expr->kind = kind;
-    expr->attrb.var = strdup(var);
-    return expr;
-}
+            //     break;
+            case ATRIB:
+                insert(node->instr->first->contents.name, node->instr->second->contents.val);
+                break;
+            case ADD:
+                if(node->instr->second->kind == STRING)
+                    aux = lookUp(node->instr->second->contents.name)->val;
+                else
+                    aux = node->instr->second->contents.val;    
+                if(node->instr->third->kind == STRING)
+                    aux_2 = lookUp(node->instr->third->contents.name)->val;
+                else
+                    aux_2 = node->instr->third->contents.val;
+                insert(node->instr->first->contents.name, aux + aux_2);
+                break;
+            case SUB:
+                if(node->instr->second->kind == STRING)
+                    aux = lookUp(node->instr->second->contents.name)->val;
+                else
+                    aux = node->instr->second->contents.val;    
+                if(node->instr->third->kind == STRING)
+                    aux_2 = lookUp(node->instr->third->contents.name)->val;
+                else
+                    aux_2 = node->instr->third->contents.val;
+                insert(node->instr->first->contents.name, aux - aux_2);
+                break;
+            case MUL:
+                if(node->instr->second->kind == STRING)
+                    aux = lookUp(node->instr->second->contents.name)->val;
+                else
+                    aux = node->instr->second->contents.val;    
+                if(node->instr->third->kind == STRING)
+                    aux_2 = lookUp(node->instr->third->contents.name)->val;
+                else
+                    aux_2 = node->instr->third->contents.val;
+                insert(node->instr->first->contents.name, aux * aux_2);
+                break;
+            case DIV:
+                if(node->instr->second->kind == STRING)
+                    aux = lookUp(node->instr->second->contents.name)->val;
+                else
+                    aux = node->instr->second->contents.val;    
+                if(node->instr->third->kind == STRING)
+                    aux_2 = lookUp(node->instr->third->contents.name)->val;
+                else
+                    aux_2 = node->instr->third->contents.val;
+                insert(node->instr->first->contents.name, aux / aux_2);
+                break;
+            case PRINT:
+                printf("%d\n", lookUp(node->instr->first->contents.name)->val);
+                break;
+            case READ:
+                scanf("%d", &aux);
+                insert(node->instr->first->contents.name, aux);
+                break;
+            default:
+                break;
+        }
 
-Expr *mkExprInt(enum ExprKind kind, int val) {
-    Expr *expr = (Expr *) malloc(sizeof(Expr));
-    expr->kind = kind;
-    expr->attrb.val = val;
-    return expr;
+        node = node->next;
+    }
 }

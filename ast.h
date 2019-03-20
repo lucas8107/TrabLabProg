@@ -3,72 +3,44 @@
 
 typedef int bool;
 
-enum InstrKind {
-    PRINT,
-    READ,
-    ATTRB,
-};
+typedef enum {ATRIB, ADD, SUB, MUL, DIV, IF_I, PRINT, READ, GOTO_I, LABEL, QUIT} OpKind;
 
-enum ExprKind {
-    OP,
-    VAR,
-    INT
-};
+typedef enum {EMPTY, INT_CONST, STRING} ElemKind;
 
-typedef enum {
-    ADD,
-    SUB,
-    DIV,
-    MUL
-} ExprOp;
-
-typedef struct Expr Expr;
-typedef struct Instr Instr;
-typedef struct List List;
-
-struct Expr {
-    enum ExprKind kind;
-    union {
+typedef struct {
+    ElemKind kind;
+    union { 
         int val;
-        char *var;
-        struct {
-            ExprOp op;
-            struct Expr *left;
-            struct Expr *right;
-        } expr;
-    } attrb;
-};
+        char *name;
+    } contents;
+} Elem;
 
-struct Instr {
-    enum InstrKind kind;
-    union {
-        char *varName;
-        struct {
-            char *varName;
-            struct Expr *expr;
-        } attrb;
-    } attr;
-};
+typedef struct {
+    OpKind op;
+    Elem *first, *second, *third;
+} Instr;
 
-struct List {
+int size;
+
+typedef struct {
     struct Node *head;
-    int size;
-};
+    struct Node *last;
+    // int size;
+} IList;
 
 struct Node {
+    Instr *instr;
     struct Node *next;
-    struct Instr *instr;
 };
 
-Instr *mkInstrPrint(char* varName);
-Instr *mkInstrRead(char* varName);
-void execInstr(Instr *instr);
+IList *mkList();
+bool isEmpty(IList *list);
+void addLast(Instr *instr, IList *list);
+struct Node *getAt(int index, IList *list);
 
-List *mkList();
-void addLast(Instr *instr, List *list);
-bool isEmpty(List *list);
-void printList(List *list);
+Elem *mkVar(char *varName);
+Elem *mkInt(int val);
 
-Expr *mkExprOp(enum ExprKind kind, Expr *left, Expr *right);
-Expr *mkExprVar(enum ExprKind kind, char *var);
-Expr *mkExprInt(enum ExprKind kind, int val);
+Instr *mkInstr(OpKind op, Elem *e1, Elem *e2, Elem *e3);
+
+void run(IList *list);
