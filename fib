@@ -1,0 +1,15 @@
+ler(n);
+a = 1;
+result = 1;
+n = n - 1;
+if n goto LOOP;
+goto EXIT;
+label LOOP;
+aux = a;
+a = a + result;
+result = aux;
+n = n - 1;
+if n goto LOOP;
+label EXIT;
+escrever(result);
+quit;

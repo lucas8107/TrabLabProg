@@ -30,7 +30,7 @@ bool isEmpty(IList *list) {
 
 struct Node *getAt(int index, IList *list) {
     struct Node *node = list->head;
-    int i = 0;
+    int i = 1;
     while(i!=index) {
         node = node->next;
         i++;
@@ -91,89 +91,77 @@ Instr *mkInstr(OpKind op, Elem *first, Elem *second, Elem *third) {
     }
 }
 
+int getElemVal(Elem *e) {
+    if(e->kind == STRING) {
+        return lookUp(e->contents.name)->val;
+    }
+    else {
+        return e->contents.val;
+    }
+}
+
 void run(IList *list) {
     struct Node *node = list->head;
     int aux;
     int aux_2;
     bool quit = FALSE;
-    while(node!=NULL && !quit) {
+    int pc = 1;
+    while(!quit) {
         switch (node->instr->op) {
             case QUIT:
                 quit = TRUE;
                 break;
             case GOTO_I:
-                node = getAt(lookUp(node->instr->first->contents.name)->val, list);
+                node = getAt((lookUp(node->instr->first->contents.name)->val), list);
+                pc = (lookUp(node->instr->first->contents.name)->val);
                 break;
             case IF_I:
-                if(node->instr->first->kind == STRING)
-                    aux = lookUp(node->instr->first->contents.name)->val;
-                else
-                    aux = node->instr->first->contents.val;
+                aux = getElemVal(node->instr->first);
+                aux_2 = lookUp(node->instr->second->contents.name)->val;
                 if(aux) {
-                    node = getAt(lookUp(node->instr->second->contents.name)->val, list);                    
+                    node = getAt(aux_2, list);
+                    pc = aux_2;
                 }
                 break;
-            // case LABEL:
-
-            //     break;
             case ATRIB:
-                insert(node->instr->first->contents.name, node->instr->second->contents.val);
+                aux = getElemVal(node->instr->second);
+                insert(node->instr->first->contents.name, aux);
                 break;
             case ADD:
-                if(node->instr->second->kind == STRING)
-                    aux = lookUp(node->instr->second->contents.name)->val;
-                else
-                    aux = node->instr->second->contents.val;    
-                if(node->instr->third->kind == STRING)
-                    aux_2 = lookUp(node->instr->third->contents.name)->val;
-                else
-                    aux_2 = node->instr->third->contents.val;
+                aux = getElemVal(node->instr->second);
+                aux_2 = getElemVal(node->instr->third);
                 insert(node->instr->first->contents.name, aux + aux_2);
                 break;
             case SUB:
-                if(node->instr->second->kind == STRING)
-                    aux = lookUp(node->instr->second->contents.name)->val;
-                else
-                    aux = node->instr->second->contents.val;    
-                if(node->instr->third->kind == STRING)
-                    aux_2 = lookUp(node->instr->third->contents.name)->val;
-                else
-                    aux_2 = node->instr->third->contents.val;
+                aux = getElemVal(node->instr->second);
+                aux_2 = getElemVal(node->instr->third);
                 insert(node->instr->first->contents.name, aux - aux_2);
                 break;
             case MUL:
-                if(node->instr->second->kind == STRING)
-                    aux = lookUp(node->instr->second->contents.name)->val;
-                else
-                    aux = node->instr->second->contents.val;    
-                if(node->instr->third->kind == STRING)
-                    aux_2 = lookUp(node->instr->third->contents.name)->val;
-                else
-                    aux_2 = node->instr->third->contents.val;
+                aux = getElemVal(node->instr->second);
+                aux_2 = getElemVal(node->instr->third);
                 insert(node->instr->first->contents.name, aux * aux_2);
                 break;
             case DIV:
-                if(node->instr->second->kind == STRING)
-                    aux = lookUp(node->instr->second->contents.name)->val;
-                else
-                    aux = node->instr->second->contents.val;    
-                if(node->instr->third->kind == STRING)
-                    aux_2 = lookUp(node->instr->third->contents.name)->val;
-                else
-                    aux_2 = node->instr->third->contents.val;
+                aux = getElemVal(node->instr->second);
+                aux_2 = getElemVal(node->instr->third);
                 insert(node->instr->first->contents.name, aux / aux_2);
                 break;
             case PRINT:
-                printf("%d\n", lookUp(node->instr->first->contents.name)->val);
+                printf("%s: %d\n", node->instr->first->contents.name, lookUp(node->instr->first->contents.name)->val);
                 break;
             case READ:
                 scanf("%d", &aux);
                 insert(node->instr->first->contents.name, aux);
                 break;
+            case LABEL:
+                break;
             default:
+                printf("Unknow %d\n", node->instr->op);
                 break;
         }
 
+        pc++;
         node = node->next;
     }
 }

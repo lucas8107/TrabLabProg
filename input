@@ -1,5 +1,5 @@
 ler(k);
-p= 6+ k;
+p= 6+   k;
 if p goto L1;
 p = p/2;
 escrever(p);
@@ -10,4 +10,6 @@ escrever(p);
 label L2;
 b=2;
 a=b;
+escrever(a);
+escrever(b);
 quit;

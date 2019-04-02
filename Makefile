@@ -7,4 +7,4 @@ clean:
 	rm main
 
 test:
-	./main input
+	./main fib

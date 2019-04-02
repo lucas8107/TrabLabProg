@@ -1,0 +1,8 @@
+ler(n);
+result = 1;
+label LOOP;
+result = result * n;
+n = n - 1;
+if n goto LOOP;
+escrever(result);
+quit;

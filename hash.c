@@ -19,10 +19,9 @@ unsigned int _hash(char *key) {
 
 List_hash *lookUp(char* key) {
     unsigned int hash = _hash(key);
-    List_hash *List_hash = table[hash];
-    while(List_hash!=NULL && strcmp(List_hash->key, key) != 0) List_hash = List_hash->next;
-
-    return List_hash;
+    List_hash *list_hash = table[hash];
+    while(list_hash!=NULL && strcmp(list_hash->key, key) != 0) list_hash = list_hash->next;
+    return list_hash;
 }
 
 void insert(char* key, int val) {
@@ -42,6 +41,7 @@ void insert(char* key, int val) {
 
     l->next = table[hash];
     table[hash] = l;
+
 }
 
 void printTable() {

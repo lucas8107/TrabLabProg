@@ -41,6 +41,8 @@ struct Node *getAt(int index, IList *list);
 Elem *mkVar(char *varName);
 Elem *mkInt(int val);
 
+int getElemVal(Elem *e);
+
 Instr *mkInstr(OpKind op, Elem *e1, Elem *e2, Elem *e3);
 
 void run(IList *list);
