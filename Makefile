@@ -8,3 +8,4 @@ clean:
 
 test:
 	./main fib
+	./main fact
