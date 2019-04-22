@@ -33,9 +33,12 @@ struct Node {
     struct Node *next;
 };
 
+struct Node **labelArray;
+int labelCount;
+
 IList *mkList();
 bool isEmpty(IList *list);
-void addLast(Instr *instr, IList *list);
+struct Node *addLast(Instr *instr, IList *list);
 struct Node *getAt(int index, IList *list);
 
 Elem *mkVar(char *varName);

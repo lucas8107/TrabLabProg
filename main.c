@@ -18,6 +18,8 @@ bool isNum(char c) {
 
 int main(int argc, char **argv) {
 
+    labelCount = 0;
+
     if(argc!=2) {
         printf("Usage: ./main input\n");
         return -1;
@@ -67,7 +69,9 @@ int main(int argc, char **argv) {
         }
         else if(!regexec(&regex_label, buffer, 2, pmatch, 0)) {
             char *result = getMatched(pmatch[1], buffer);
-            addLast(mkInstr(LABEL, mkVar(result), NULL, NULL), list);
+            labelArray = realloc(labelArray, (labelCount + 1) * sizeof(struct Node));
+            labelArray[labelCount] = addLast(mkInstr(LABEL, mkVar(result), NULL, NULL), list);
+            labelCount++;
             free(result);
         }
         else if(!regexec(&regex_expr, buffer, 5, pmatch, 0)) {
